@@ -19,4 +19,4 @@ The Frontend of the AI Chess Game. This file contains the code of the Chess Game
 ### script.js
 The Backend of the AI Chess Game. This file deals with the logic behind the chess game. It includes the Minimax with Alpha-Beta Pruning Searching Algorithm for the Computer player and includes the logic of the Assisted Chatbot for the player. This file contains the logic behind how the game will keep track of the moves made by each player and other features presented in the Chess Game.
 ### style.css
-The Frontend of the AI Chess Game. Helps 
+The Frontend of the AI Chess Game. This file contains code that modifies the color, style, and position of the overall chess UI. 
