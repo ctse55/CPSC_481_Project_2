@@ -293,3 +293,23 @@ var cfg = {
     onSnapEnd: onSnapEnd
 };
 board = ChessBoard('board', cfg);
+
+// chatbot functionality
+function addChatMessage(message, sender = "bot") {
+    const chatBox = document.getElementById("chat-box");
+    const messageElement = document.createElement("div");
+    messageElement.textContent = (sender === "bot" ? "Bot: " : "You: ") + message;
+    messageElement.className = sender === "bot" ? "bot-message" : "user-message";
+    chatBox.appendChild(messageElement);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+document.getElementById("chat-btn").addEventListener("click", function () {
+    const bestMove = getBestMove(game);
+    if (bestMove) {
+        const fromTo = `${bestMove.from}-${bestMove.to}`;
+        addChatMessage(`${fromTo}`);
+    } else {
+        addChatMessage("No best move available. The game might be over.");
+    }
+});

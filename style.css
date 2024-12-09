@@ -1,14 +1,38 @@
+#container {
+    display: flex;
+    justify-content: center;
+}
+
 .board {
     width: 400px;
-    margin: auto
+}
+
+#sidebar {
+    margin-left: 20px;
+    width: 300px;
 }
 
 .info {
-    width: 400px;
-    margin: auto;
+    margin-bottom: 20px;
 }
 
-.move-history {
-    max-height: 100px;
+.chat-box {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    max-height: 200px;
     overflow-y: scroll;
+    background-color: #f9f9f9;
+}
+
+.chat-input {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+#chat-btn {
+    padding: 5px 10px;
+    font-size: 14px;
+    cursor: pointer;
 }
