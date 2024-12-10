@@ -1,72 +1,95 @@
-var board,
-    game = new Chess();
+var board, game = new Chess();
 
-/*The "AI" part starts here */
+/* Minimax Searching Algorithm with Alpha-Beta Pruning */
 
-var minimaxRoot =function(depth, game, isMaximisingPlayer) {
+function minimaxRoot(depth, game, isMaximisingPlayer) {
+    const moves = game.ugly_moves();
+    let bestValue = isMaximisingPlayer ? -Infinity : Infinity;
+    let bestMove = null;
 
-    var newGameMoves = game.ugly_moves();
-    var bestMove = -9999;
-    var bestMoveFound;
-
-    for(var i = 0; i < newGameMoves.length; i++) {
-        var newGameMove = newGameMoves[i]
-        game.ugly_move(newGameMove);
-        var value = minimax(depth - 1, game, -10000, 10000, !isMaximisingPlayer);
+    for (const move of moves) {
+        game.ugly_move(move);
+        const value = minimax(depth - 1, game, -Infinity, Infinity, !isMaximisingPlayer);
         game.undo();
-        if(value >= bestMove) {
-            bestMove = value;
-            bestMoveFound = newGameMove;
+
+        if ((isMaximisingPlayer && value > bestValue) || (!isMaximisingPlayer && value < bestValue)) {
+            bestValue = value;
+            bestMove = move;
         }
     }
-    return bestMoveFound;
-};
+    return bestMove;
+}
 
-var minimax = function (depth, game, alpha, beta, isMaximisingPlayer) {
+function minimax(depth, game, alpha, beta, isMaximisingPlayer) {
     positionCount++;
-    if (depth === 0) {
-        return -evaluateBoard(game.board());
+
+    if (depth === 0 || game.game_over()) {
+        return evaluateBoard(game.board());
     }
 
-    var newGameMoves = game.ugly_moves();
+    const moves = game.ugly_moves();
+    let bestValue = isMaximisingPlayer ? -Infinity : Infinity;
 
-    if (isMaximisingPlayer) {
-        var bestMove = -9999;
-        for (var i = 0; i < newGameMoves.length; i++) {
-            game.ugly_move(newGameMoves[i]);
-            bestMove = Math.max(bestMove, minimax(depth - 1, game, alpha, beta, !isMaximisingPlayer));
-            game.undo();
-            alpha = Math.max(alpha, bestMove);
-            if (beta <= alpha) {
-                return bestMove;
+    for (const move of moves) {
+        game.ugly_move(move);
+        const value = minimax(depth - 1, game, alpha, beta, !isMaximisingPlayer);
+        game.undo();
+
+        if (isMaximisingPlayer) {
+            bestValue = Math.max(bestValue, value);
+            alpha = Math.max(alpha, bestValue);
+        } else {
+            bestValue = Math.min(bestValue, value);
+            beta = Math.min(beta, bestValue);
+        }
+
+        if (beta <= alpha) break; // Alpha-beta pruning
+    }
+
+    return bestValue;
+}
+
+function evaluateBoard(board) {
+    let totalEvaluation = 0;
+
+    for (let y = 0; y < 8; y++) {
+        for (let x = 0; x < 8; x++) {
+            const piece = board[y][x];
+            if (piece) {
+                totalEvaluation += getPieceValue(piece, x, y);
             }
         }
-        return bestMove;
-    } else {
-        var bestMove = 9999;
-        for (var i = 0; i < newGameMoves.length; i++) {
-            game.ugly_move(newGameMoves[i]);
-            bestMove = Math.min(bestMove, minimax(depth - 1, game, alpha, beta, !isMaximisingPlayer));
-            game.undo();
-            beta = Math.min(beta, bestMove);
-            if (beta <= alpha) {
-                return bestMove;
-            }
-        }
-        return bestMove;
     }
-};
 
-var evaluateBoard = function (board) {
-    var totalEvaluation = 0;
-    for (var i = 0; i < 8; i++) {
-        for (var j = 0; j < 8; j++) {
-            totalEvaluation = totalEvaluation + getPieceValue(board[i][j], i ,j);
-        }
-    }
     return totalEvaluation;
-};
+}
 
+function getPieceValue(piece, x, y) {
+    const pieceValues = {
+        p: 10,
+        r: 50,
+        n: 30,
+        b: 30,
+        q: 90,
+        k: 900,
+    };
+
+    const positionTables = {
+        p: piece.color === 'w' ? pawnEvalWhite : pawnEvalBlack,
+        r: piece.color === 'w' ? rookEvalWhite : rookEvalBlack,
+        n: knightEval,
+        b: piece.color === 'w' ? bishopEvalWhite : bishopEvalBlack,
+        q: evalQueen,
+        k: piece.color === 'w' ? kingEvalWhite : kingEvalBlack,
+    };
+
+    const baseValue = pieceValues[piece.type] || 0;
+    const positionValue = positionTables[piece.type][y][x] || 0;
+
+    return piece.color === 'w' ? baseValue + positionValue : -(baseValue + positionValue);
+}
+
+/* Position evaluation tables */
 var reverseArray = function(array) {
     return array.slice().reverse();
 };
@@ -148,153 +171,116 @@ var kingEvalWhite = [
 
 var kingEvalBlack = reverseArray(kingEvalWhite);
 
+/* Board visualization and game state handling */
 
-
-
-var getPieceValue = function (piece, x, y) {
-    if (piece === null) {
-        return 0;
-    }
-    var getAbsoluteValue = function (piece, isWhite, x ,y) {
-        if (piece.type === 'p') {
-            return 10 + ( isWhite ? pawnEvalWhite[y][x] : pawnEvalBlack[y][x] );
-        } else if (piece.type === 'r') {
-            return 50 + ( isWhite ? rookEvalWhite[y][x] : rookEvalBlack[y][x] );
-        } else if (piece.type === 'n') {
-            return 30 + knightEval[y][x];
-        } else if (piece.type === 'b') {
-            return 30 + ( isWhite ? bishopEvalWhite[y][x] : bishopEvalBlack[y][x] );
-        } else if (piece.type === 'q') {
-            return 90 + evalQueen[y][x];
-        } else if (piece.type === 'k') {
-            return 900 + ( isWhite ? kingEvalWhite[y][x] : kingEvalBlack[y][x] );
-        }
-        throw "Unknown piece type: " + piece.type;
-    };
-
-    var absoluteValue = getAbsoluteValue(piece, piece.color === 'w', x ,y);
-    return piece.color === 'w' ? absoluteValue : -absoluteValue;
-};
-
-
-/* board visualization and games state handling */
-
-var onDragStart = function (source, piece, position, orientation) {
-    if (game.in_checkmate() === true || game.in_draw() === true ||
-        piece.search(/^b/) !== -1) {
-        return false;
-    }
-};
-
-var makeBestMove = function () {
-    var bestMove = getBestMove(game);
-    game.ugly_move(bestMove);
-    board.position(game.fen());
-    renderMoveHistory(game.history());
+function makeBestMove() {
     if (game.game_over()) {
-        alert('Game over');
+        alert("Game over");
+        return;
     }
-};
 
+    const bestMove = getBestMove(game);
+    if (bestMove) {
+        game.ugly_move(bestMove);
+        board.position(game.fen());
+        renderMoveHistory(game.history());
+    }
 
-var positionCount;
-var getBestMove = function (game) {
     if (game.game_over()) {
-        alert('Game over');
+        alert("Game over");
     }
+}
 
+function getBestMove(game) {
     positionCount = 0;
-    var depth = parseInt($('#search-depth').find(':selected').text());
+    const depth = parseInt(document.getElementById("search-depth").value, 10);
 
-    var d = new Date().getTime();
-    var bestMove = minimaxRoot(depth, game, true);
-    var d2 = new Date().getTime();
-    var moveTime = (d2 - d);
-    var positionsPerS = ( positionCount * 1000 / moveTime);
+    const startTime = performance.now();
+    const bestMove = minimaxRoot(depth, game, true);
+    const endTime = performance.now();
 
-    $('#position-count').text(positionCount);
-    $('#time').text(moveTime/1000 + 's');
-    $('#positions-per-s').text(positionsPerS);
+    const moveTime = ((endTime - startTime) / 1000).toFixed(2);
+    const positionsPerSecond = Math.round((positionCount * 1000) / (endTime - startTime));
+
+    document.getElementById("position-count").textContent = positionCount;
+    document.getElementById("time").textContent = `${moveTime}s`;
+    document.getElementById("positions-per-s").textContent = positionsPerSecond;
+
     return bestMove;
-};
+}
 
-var renderMoveHistory = function (moves) {
-    var historyElement = $('#move-history').empty();
-    historyElement.empty();
-    for (var i = 0; i < moves.length; i = i + 2) {
-        historyElement.append('<span>' + moves[i] + ' ' + ( moves[i + 1] ? moves[i + 1] : ' ') + '</span><br>')
+function renderMoveHistory(moves) {
+    const historyElement = document.getElementById("move-history");
+    historyElement.innerHTML = "";
+
+    for (let i = 0; i < moves.length; i += 2) {
+        historyElement.innerHTML += `<span>${moves[i]} ${moves[i + 1] || ""}</span><br>`;
     }
-    historyElement.scrollTop(historyElement[0].scrollHeight);
 
-};
+    historyElement.scrollTop = historyElement.scrollHeight;
+}
 
-var onDrop = function (source, target) {
-
-    var move = game.move({
+function onDrop(source, target) {
+    const move = game.move({
         from: source,
         to: target,
-        promotion: 'q'
+        promotion: "q", // Always promote to a queen
     });
 
     removeGreySquares();
-    if (move === null) {
-        return 'snapback';
-    }
+    if (!move) return "snapback";
 
     renderMoveHistory(game.history());
-    window.setTimeout(makeBestMove, 250);
-};
+    setTimeout(makeBestMove, 250);
+}
 
-var onSnapEnd = function () {
+function onSnapEnd() {
     board.position(game.fen());
-};
+}
 
-var onMouseoverSquare = function(square, piece) {
-    var moves = game.moves({
-        square: square,
-        verbose: true
-    });
+function onMouseoverSquare(square) {
+    const moves = game.moves({ square, verbose: true });
 
     if (moves.length === 0) return;
 
     greySquare(square);
+    moves.forEach((move) => greySquare(move.to));
+}
 
-    for (var i = 0; i < moves.length; i++) {
-        greySquare(moves[i].to);
-    }
-};
-
-var onMouseoutSquare = function(square, piece) {
+function onMouseoutSquare() {
     removeGreySquares();
-};
+}
 
-var removeGreySquares = function() {
-    $('#board .square-55d63').css('background', '');
-};
+function removeGreySquares() {
+    document.querySelectorAll("#board .square-55d63").forEach((square) => {
+        square.style.background = "";
+    });
+}
 
-var greySquare = function(square) {
-    var squareEl = $('#board .square-' + square);
+function greySquare(square) {
+    const squareEl = document.querySelector(`#board .square-${square}`);
+    const background = squareEl.classList.contains("black-3c85d") ? "#696969" : "#a9a9a9";
+    squareEl.style.background = background;
+}
 
-    var background = '#a9a9a9';
-    if (squareEl.hasClass('black-3c85d') === true) {
-        background = '#696969';
-    }
-
-    squareEl.css('background', background);
-};
-
-var cfg = {
+const cfg = {
     draggable: true,
-    position: 'start',
-    onDragStart: onDragStart,
-    onDrop: onDrop,
-    onMouseoutSquare: onMouseoutSquare,
-    onMouseoverSquare: onMouseoverSquare,
-    onSnapEnd: onSnapEnd
+    position: "start",
+    onDragStart: (source, piece) => !game.game_over() && piece.search(/^b/) === -1,
+    onDrop,
+    onMouseoverSquare,
+    onMouseoutSquare,
+    onSnapEnd,
 };
-board = ChessBoard('board', cfg);
+board = ChessBoard("board", cfg);
 
-// chatbot functionality
+// Chatbot functionality
+document.getElementById("chat-btn").addEventListener("click", () => {
+    const bestMove = getBestMove(game);
+    const message = bestMove ? `${bestMove.from}-${bestMove.to}` : "No best move available. The game might be over.";
+    addChatMessage(message);
+});
+
 function addChatMessage(message, sender = "bot") {
     const chatBox = document.getElementById("chat-box");
     const messageElement = document.createElement("div");
@@ -303,13 +289,3 @@ function addChatMessage(message, sender = "bot") {
     chatBox.appendChild(messageElement);
     chatBox.scrollTop = chatBox.scrollHeight;
 }
-
-document.getElementById("chat-btn").addEventListener("click", function () {
-    const bestMove = getBestMove(game);
-    if (bestMove) {
-        const fromTo = `${bestMove.from}-${bestMove.to}`;
-        addChatMessage(`${fromTo}`);
-    } else {
-        addChatMessage("No best move available. The game might be over.");
-    }
-});
