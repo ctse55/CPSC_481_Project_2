@@ -12,8 +12,12 @@ A directory that holds the different modules when downloading the source code ch
 ## File Description
 ### chess.js
 This file contains the logic of chess. It contains the general rules of chess such as legal/illegal moves, draws, checkmates, etc. 
+Source Code: https://github.com/jhlywa/chess.js.git 
+
 ### chessboard-0.3.0.js
 This file contains the logic to create the chessboard generated when players start the game. 
+Source Code: https://github.com/oakmac/chessboardjs.git 
+
 ### index.html
 The Frontend of the AI Chess Game. This file contains the code of the Chess Game UI and what the users will be able to see on their end of the application. 
 ### script.js
