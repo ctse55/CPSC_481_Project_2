@@ -1,4 +1,4 @@
-# Assited AI Chess Game (CPSC 481 Project 2)
+# Assisted AI Chess Game (CPSC 481 Project 2)
 **By: Chalmers Tse and Darren Chen**
 ---
 ## **Project Overview**
